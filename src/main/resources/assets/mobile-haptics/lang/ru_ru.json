@@ -1,0 +1,18 @@
+{
+  "screen.mobile_haptics.title": "Мобильная вибрация",
+
+  "option.mobile_haptics.enabled": "Вибрация",
+  "option.mobile_haptics.break": "Ломание блоков",
+  "option.mobile_haptics.place": "Установка блоков",
+
+  "gui.mobile_haptics.enabled": "ВКЛ",
+  "gui.mobile_haptics.disabled": "ВЫКЛ",
+
+  "label.mobile_haptics.break_duration": "Длительность при ломании (мс)",
+  "label.mobile_haptics.place_duration": "Длительность при установке (мс)",
+  "label.mobile_haptics.break_strength": "Сила при ломании (%)",
+  "label.mobile_haptics.place_strength": "Сила при установке (%)",
+
+  "button.mobile_haptics.test": "Тест вибрации",
+  "button.mobile_haptics.save": "Сохранить"
+}
