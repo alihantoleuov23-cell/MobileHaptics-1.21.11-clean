@@ -1,9 +1,15 @@
 package ru.mobilehaptics;
 
 public final class HapticManager {
-    private static final MobileHapticsConfig CONFIG = MobileHapticsConfig.load();
+
+    private static final MobileHapticsConfig CONFIG =
+            MobileHapticsConfig.load();
 
     private HapticManager() {
+    }
+
+    public static void initialize() {
+        NativeVibrator.init();
     }
 
     public static MobileHapticsConfig getConfig() {
@@ -19,7 +25,10 @@ public final class HapticManager {
             return;
         }
 
-        vibrate(CONFIG.breakDuration, CONFIG.breakStrength);
+        vibrate(
+                CONFIG.breakDuration,
+                CONFIG.breakStrength
+        );
     }
 
     public static void placeBlock() {
@@ -27,7 +36,10 @@ public final class HapticManager {
             return;
         }
 
-        vibrate(CONFIG.placeDuration, CONFIG.placeStrength);
+        vibrate(
+                CONFIG.placeDuration,
+                CONFIG.placeStrength
+        );
     }
 
     public static void test() {
@@ -35,14 +47,26 @@ public final class HapticManager {
             return;
         }
 
-        vibrate(CONFIG.breakDuration, CONFIG.breakStrength);
+        vibrate(
+                CONFIG.breakDuration,
+                CONFIG.breakStrength
+        );
     }
 
-    private static void vibrate(int duration, int strength) {
+    private static void vibrate(
+            int duration,
+            int strength
+    ) {
         try {
-            NativeVibrator.vibrate(duration, strength);
+            NativeVibrator.vibrate(
+                    duration,
+                    strength
+            );
         } catch (Throwable ignored) {
-            // The mod should never crash Minecraft if Android haptics are unavailable.
+            /*
+             * Если Android-вибрация недоступна,
+             * Minecraft не должен вылететь.
+             */
         }
     }
 }
