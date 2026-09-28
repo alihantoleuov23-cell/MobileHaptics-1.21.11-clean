@@ -1,15 +1,16 @@
 package ru.mobilehaptics;
 
-import net.fabricmc.loader.api.FabricLoader;
-
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 public final class NativeVibrator {
 
     private static boolean loaded = false;
+
+    private static Object vibrator;
+
+    private static Method createOneShotMethod;
+    private static Method vibrateMethod;
 
     private NativeVibrator() {
     }
@@ -20,76 +21,109 @@ public final class NativeVibrator {
             return;
         }
 
-        String architecture =
-                System.getProperty(
-                        "os.arch",
-                        ""
-                ).toLowerCase();
-
-        String resourcePath;
-
-        if (architecture.contains("aarch64")
-                || architecture.contains("arm64")) {
-
-            resourcePath =
-                    "/native/arm64-v8a/libmobilehaptics.so";
-
-        } else if (architecture.contains("x86_64")
-                || architecture.contains("amd64")) {
-
-            resourcePath =
-                    "/native/x86_64/libmobilehaptics.so";
-
-        } else {
-
-            return;
-        }
-
         try {
 
-            Path nativeDirectory =
-                    FabricLoader.getInstance()
-                            .getConfigDir()
-                            .resolve(
-                                    "mobile-haptics-native"
-                            );
-
-            Files.createDirectories(
-                    nativeDirectory
-            );
-
-            Path library =
-                    nativeDirectory.resolve(
-                            "libmobilehaptics.so"
+            /*
+             * Получаем настоящее Android Application
+             * внутри процесса Zalith/Pojav.
+             */
+            Class<?> activityThreadClass =
+                    Class.forName(
+                            "android.app.ActivityThread"
                     );
 
-            try (InputStream input =
-                         NativeVibrator.class
-                                 .getResourceAsStream(
-                                         resourcePath
-                                 )) {
+            Method currentApplicationMethod =
+                    activityThreadClass.getMethod(
+                            "currentApplication"
+                    );
 
-                if (input == null) {
-                    return;
-                }
+            Object application =
+                    currentApplicationMethod.invoke(
+                            null
+                    );
 
-                Files.copy(
-                        input,
-                        library,
-                        StandardCopyOption.REPLACE_EXISTING
-                );
+            if (application == null) {
+                return;
             }
 
-            System.load(
-                    library.toAbsolutePath()
-                            .toString()
+            /*
+             * Получаем системный Vibrator.
+             */
+            Method getSystemServiceMethod =
+                    application.getClass().getMethod(
+                            "getSystemService",
+                            String.class
+                    );
+
+            vibrator =
+                    getSystemServiceMethod.invoke(
+                            application,
+                            "vibrator"
+                    );
+
+            if (vibrator == null) {
+                return;
+            }
+
+            Class<?> vibratorClass =
+                    Class.forName(
+                            "android.os.Vibrator"
+                    );
+
+            /*
+             * Проверяем, есть ли вибромотор.
+             */
+            Method hasVibratorMethod =
+                    vibratorClass.getMethod(
+                            "hasVibrator"
+                    );
+
+            Object hasVibrator =
+                    hasVibratorMethod.invoke(
+                            vibrator
+                    );
+
+            if (!Boolean.TRUE.equals(
+                    hasVibrator
+            )) {
+                return;
+            }
+
+            /*
+             * Android VibrationEffect.
+             */
+            Class<?> vibrationEffectClass =
+                    Class.forName(
+                            "android.os.VibrationEffect"
+                    );
+
+            createOneShotMethod =
+                    vibrationEffectClass.getMethod(
+                            "createOneShot",
+                            long.class,
+                            int.class
+                    );
+
+            vibrateMethod =
+                    vibratorClass.getMethod(
+                            "vibrate",
+                            vibrationEffectClass
+                    );
+
+            loaded = true;
+
+            System.err.println(
+                    "[MobileHaptics] Android vibrator initialized"
             );
 
-            loaded = nativeInit();
-
-        } catch (Throwable ignored) {
+        } catch (Throwable throwable) {
 
             loaded = false;
+
+            System.err.println(
+                    "[MobileHaptics] Failed to initialize Android vibrator: "
+                            + throwable
+            );
         }
     }
 
@@ -124,21 +158,42 @@ public final class NativeVibrator {
                         )
                 );
 
+        /*
+         * Android amplitude:
+         * 1   = minimum
+         * 255 = maximum
+         */
+        int amplitude =
+                Math.max(
+                        1,
+                        Math.min(
+                                255,
+                                Math.round(
+                                        strength * 2.55f
+                                )
+                        )
+                );
+
         try {
 
-            nativeVibrate(
-                    duration,
-                    strength
+            Object effect =
+                    createOneShotMethod.invoke(
+                            null,
+                            (long) duration,
+                            amplitude
+                    );
+
+            vibrateMethod.invoke(
+                    vibrator,
+                    effect
             );
 
-        } catch (Throwable ignored) {
+        } catch (Throwable throwable) {
+
+            System.err.println(
+                    "[MobileHaptics] Vibration failed: "
+                            + throwable
+            );
         }
     }
-
-    private static native boolean nativeInit();
-
-    private static native void nativeVibrate(
-            int durationMs,
-            int strengthPercent
-    );
 }
