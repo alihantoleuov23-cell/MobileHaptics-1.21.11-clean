@@ -34,17 +34,15 @@ public final class HapticsScreen extends Screen {
 
         int y = 45;
 
-        enabledButton = CycleButton.onOffBuilder(
-                        Component.translatable("gui.mobile_haptics.enabled"),
-                        Component.translatable("gui.mobile_haptics.disabled")
-                )
-                .withInitialValue(config.enabled)
+        enabledButton = CycleButton.onOffBuilder(config.enabled)
                 .create(
                         centerX - 100,
                         y,
                         200,
                         20,
-                        Component.translatable("option.mobile_haptics.enabled"),
+                        Component.translatable(
+                                "option.mobile_haptics.enabled"
+                        ),
                         (button, value) -> {
                             config.enabled = value;
                         }
@@ -55,16 +53,16 @@ public final class HapticsScreen extends Screen {
         y += 27;
 
         breakButton = CycleButton.onOffBuilder(
-                        Component.translatable("gui.mobile_haptics.enabled"),
-                        Component.translatable("gui.mobile_haptics.disabled")
+                        config.breakEnabled
                 )
-                .withInitialValue(config.breakEnabled)
                 .create(
                         centerX - 100,
                         y,
                         200,
                         20,
-                        Component.translatable("option.mobile_haptics.break"),
+                        Component.translatable(
+                                "option.mobile_haptics.break"
+                        ),
                         (button, value) -> {
                             config.breakEnabled = value;
                         }
@@ -75,16 +73,16 @@ public final class HapticsScreen extends Screen {
         y += 27;
 
         placeButton = CycleButton.onOffBuilder(
-                        Component.translatable("gui.mobile_haptics.enabled"),
-                        Component.translatable("gui.mobile_haptics.disabled")
+                        config.placeEnabled
                 )
-                .withInitialValue(config.placeEnabled)
                 .create(
                         centerX - 100,
                         y,
                         200,
                         20,
-                        Component.translatable("option.mobile_haptics.place"),
+                        Component.translatable(
+                                "option.mobile_haptics.place"
+                        ),
                         (button, value) -> {
                             config.placeEnabled = value;
                         }
@@ -176,6 +174,7 @@ public final class HapticsScreen extends Screen {
         );
 
         box.setValue(value);
+
         box.setFilter(text ->
                 text.matches("\\d{0,3}")
         );
@@ -252,7 +251,7 @@ public final class HapticsScreen extends Screen {
     ) {
         return Math.max(
                 min,
-                Math.min(max, value)
+                Math.min(value, max)
         );
     }
 
@@ -263,7 +262,12 @@ public final class HapticsScreen extends Screen {
             int mouseY,
             float partialTick
     ) {
-        this.renderBackground(graphics);
+        this.renderBackground(
+                graphics,
+                mouseX,
+                mouseY,
+                partialTick
+        );
 
         graphics.drawCenteredString(
                 this.font,
