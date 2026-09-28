@@ -50,6 +50,10 @@ jobs:
             src/main/cpp/mobilehaptics.c \
             -o src/main/resources/native/x86_64/libmobilehaptics.so
 
+      - name: Generate Gradle Wrapper
+        run: |
+          gradle wrapper --gradle-version 8.14.3
+
       - name: Build Minecraft mod
         run: |
           chmod +x gradlew
