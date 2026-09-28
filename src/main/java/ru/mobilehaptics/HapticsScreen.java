@@ -21,12 +21,16 @@ public final class HapticsScreen extends Screen {
     private EditBox placeStrengthBox;
 
     public HapticsScreen(Screen parent) {
-        super(Component.translatable("screen.mobile_haptics.title"));
+        super(Component.translatable(
+                "screen.mobile_haptics.title"
+        ));
+
         this.parent = parent;
     }
 
     @Override
     protected void init() {
+
         int centerX = this.width / 2;
 
         MobileHapticsConfig config =
@@ -34,93 +38,114 @@ public final class HapticsScreen extends Screen {
 
         int y = 45;
 
-        enabledButton = CycleButton.onOffBuilder(config.enabled)
-                .create(
-                        centerX - 100,
-                        y,
-                        200,
-                        20,
-                        Component.translatable(
-                                "option.mobile_haptics.enabled"
-                        ),
-                        (button, value) -> {
-                            config.enabled = value;
-                        }
-                );
+        enabledButton =
+                CycleButton.onOffBuilder(config.enabled)
+                        .create(
+                                centerX - 100,
+                                y,
+                                200,
+                                20,
+                                Component.translatable(
+                                        "option.mobile_haptics.enabled"
+                                ),
+                                (button, value) -> {
+                                    config.enabled = value;
+                                }
+                        );
 
-        this.addRenderableWidget(enabledButton);
-
-        y += 27;
-
-        breakButton = CycleButton.onOffBuilder(
-                        config.breakEnabled
-                )
-                .create(
-                        centerX - 100,
-                        y,
-                        200,
-                        20,
-                        Component.translatable(
-                                "option.mobile_haptics.break"
-                        ),
-                        (button, value) -> {
-                            config.breakEnabled = value;
-                        }
-                );
-
-        this.addRenderableWidget(breakButton);
+        this.addRenderableWidget(
+                enabledButton
+        );
 
         y += 27;
 
-        placeButton = CycleButton.onOffBuilder(
-                        config.placeEnabled
-                )
-                .create(
-                        centerX - 100,
-                        y,
-                        200,
-                        20,
-                        Component.translatable(
-                                "option.mobile_haptics.place"
-                        ),
-                        (button, value) -> {
-                            config.placeEnabled = value;
-                        }
-                );
+        breakButton =
+                CycleButton.onOffBuilder(
+                                config.breakEnabled
+                        )
+                        .create(
+                                centerX - 100,
+                                y,
+                                200,
+                                20,
+                                Component.translatable(
+                                        "option.mobile_haptics.break"
+                                ),
+                                (button, value) -> {
+                                    config.breakEnabled = value;
+                                }
+                        );
 
-        this.addRenderableWidget(placeButton);
+        this.addRenderableWidget(
+                breakButton
+        );
+
+        y += 27;
+
+        placeButton =
+                CycleButton.onOffBuilder(
+                                config.placeEnabled
+                        )
+                        .create(
+                                centerX - 100,
+                                y,
+                                200,
+                                20,
+                                Component.translatable(
+                                        "option.mobile_haptics.place"
+                                ),
+                                (button, value) -> {
+                                    config.placeEnabled = value;
+                                }
+                        );
+
+        this.addRenderableWidget(
+                placeButton
+        );
 
         y += 30;
 
-        breakDurationBox = createNumberBox(
-                centerX - 100,
-                y,
-                Integer.toString(config.breakDuration)
-        );
+        breakDurationBox =
+                createNumberBox(
+                        centerX - 100,
+                        y,
+                        Integer.toString(
+                                config.breakDuration
+                        )
+                );
 
         y += 27;
 
-        placeDurationBox = createNumberBox(
-                centerX - 100,
-                y,
-                Integer.toString(config.placeDuration)
-        );
+        placeDurationBox =
+                createNumberBox(
+                        centerX - 100,
+                        y,
+                        Integer.toString(
+                                config.placeDuration
+                        )
+                );
 
         y += 27;
 
-        breakStrengthBox = createNumberBox(
-                centerX - 100,
-                y,
-                Integer.toString(config.breakStrength)
-        );
+        breakStrengthBox =
+                createNumberBox(
+                        centerX - 100,
+                        y,
+                        Integer.toString(
+                                config.breakStrength
+                        )
+                );
 
         y += 27;
 
-        placeStrengthBox = createNumberBox(
-                centerX - 100,
-                y,
-                Integer.toString(config.placeStrength)
-        );
+        placeStrengthBox =
+                createNumberBox(
+                        centerX - 100,
+                        y,
+                        Integer.toString(
+                                config.placeStrength
+                        )
+                );
 
         y += 32;
 
@@ -129,7 +154,8 @@ public final class HapticsScreen extends Screen {
                                 Component.translatable(
                                         "button.mobile_haptics.test"
                                 ),
-                                button -> HapticManager.test()
+                                button ->
+                                        HapticManager.test()
                         )
                         .bounds(
                                 centerX - 100,
@@ -147,7 +173,8 @@ public final class HapticsScreen extends Screen {
                                 Component.translatable(
                                         "button.mobile_haptics.save"
                                 ),
-                                button -> saveAndClose()
+                                button ->
+                                        saveAndClose()
                         )
                         .bounds(
                                 centerX - 100,
@@ -164,19 +191,22 @@ public final class HapticsScreen extends Screen {
             int y,
             String value
     ) {
-        EditBox box = new EditBox(
-                this.font,
-                x,
-                y,
-                200,
-                20,
-                Component.empty()
-        );
+
+        EditBox box =
+                new EditBox(
+                        this.font,
+                        x,
+                        y,
+                        200,
+                        20,
+                        Component.empty()
+                );
 
         box.setValue(value);
 
-        box.setFilter(text ->
-                text.matches("\\d{0,3}")
+        box.setFilter(
+                text ->
+                        text.matches("\\d{0,3}")
         );
 
         this.addRenderableWidget(box);
@@ -185,6 +215,7 @@ public final class HapticsScreen extends Screen {
     }
 
     private void saveAndClose() {
+
         MobileHapticsConfig config =
                 HapticManager.getConfig();
 
@@ -237,6 +268,7 @@ public final class HapticsScreen extends Screen {
             String value,
             int fallback
     ) {
+
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException ignored) {
@@ -249,6 +281,7 @@ public final class HapticsScreen extends Screen {
             int min,
             int max
     ) {
+
         return Math.max(
                 min,
                 Math.min(value, max)
@@ -262,6 +295,7 @@ public final class HapticsScreen extends Screen {
             int mouseY,
             float partialTick
     ) {
+
         this.renderBackground(
                 graphics,
                 mouseX,
