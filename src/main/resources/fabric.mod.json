@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "mobile-haptics",
+  "version": "${version}",
+  "name": "Mobile Haptics",
+  "description": "Android haptic feedback for block breaking and block placement.",
+  "authors": [
+    "MobileHaptics"
+  ],
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "ru.mobilehaptics.MobileHapticsClient"
+    ]
+  },
+  "mixins": [
+    "mobile-haptics.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.18.0",
+    "minecraft": "1.21.11",
+    "fabric-api": "*"
+  }
+}
