@@ -19,11 +19,11 @@ public final class NativeVibrator {
             return;
         }
 
-        /*
-         * На Android через Zalith Launcher
-         * должен присутствовать DALVIK_APPLICATION.
-         */
-        if (System.getenv("DALVIK_APPLICATION") == null) {
+        String applicationPointer =
+                System.getenv("DALVIK_APPLICATION");
+
+        if (applicationPointer == null
+                || applicationPointer.isBlank()) {
             return;
         }
 
@@ -57,10 +57,13 @@ public final class NativeVibrator {
             Files.createDirectories(nativeDirectory);
 
             Path library =
-                    nativeDirectory.resolve("libmobilehaptics.so");
+                    nativeDirectory.resolve(
+                            "libmobilehaptics.so"
+                    );
 
             try (InputStream input =
-                         NativeVibrator.class.getResourceAsStream(resourcePath)) {
+                         NativeVibrator.class
+                                 .getResourceAsStream(resourcePath)) {
 
                 if (input == null) {
                     return;
@@ -77,9 +80,6 @@ public final class NativeVibrator {
                     library.toAbsolutePath().toString()
             );
 
-            /*
-             * После загрузки .so получаем Android Vibrator.
-             */
             loaded = nativeInit();
 
         } catch (Throwable ignored) {
