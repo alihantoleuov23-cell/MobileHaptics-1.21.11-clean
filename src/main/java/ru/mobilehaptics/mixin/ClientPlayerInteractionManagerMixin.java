@@ -1,51 +1,69 @@
 package ru.mobilehaptics.mixin;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerInteractionManager;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.phys.BlockHitResult;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ru.mobilehaptics.HapticManager;
 
-@Mixin(ClientPlayerInteractionManager.class)
+@Mixin(MultiPlayerGameMode.class)
 public final class ClientPlayerInteractionManagerMixin {
 
+    @Unique
+    private boolean mobileHaptics$holdingBlockItem;
+
     @Inject(
-            method = "breakBlock",
+            method = "destroyBlock",
             at = @At("RETURN")
     )
-    private void mobileHaptics$breakBlock(
+    private void mobileHaptics$onBreak(
             BlockPos pos,
             CallbackInfoReturnable<Boolean> cir
     ) {
-        if (cir.getReturnValueZ()) {
+        if (cir.getReturnValue()) {
             HapticManager.breakBlock();
         }
     }
 
     @Inject(
-            method = "interactBlock",
+            method = "useItemOn",
+            at = @At("HEAD")
+    )
+    private void mobileHaptics$rememberBlockItem(
+            LocalPlayer player,
+            InteractionHand hand,
+            BlockHitResult hitResult,
+            CallbackInfoReturnable<InteractionResult> cir
+    ) {
+        mobileHaptics$holdingBlockItem =
+                player.getItemInHand(hand).getItem()
+                        instanceof BlockItem;
+    }
+
+    @Inject(
+            method = "useItemOn",
             at = @At("RETURN")
     )
-    private void mobileHaptics$interactBlock(
-            PlayerEntity player,
-            Hand hand,
+    private void mobileHaptics$onPlace(
+            LocalPlayer player,
+            InteractionHand hand,
             BlockHitResult hitResult,
-            CallbackInfoReturnable<ActionResult> cir
+            CallbackInfoReturnable<InteractionResult> cir
     ) {
-        ActionResult result = cir.getReturnValue();
+        if (mobileHaptics$holdingBlockItem
+                && cir.getReturnValue().consumesAction()) {
 
-        if (result != null && result.isAccepted()) {
             HapticManager.placeBlock();
         }
+
+        mobileHaptics$holdingBlockItem = false;
     }
 }
