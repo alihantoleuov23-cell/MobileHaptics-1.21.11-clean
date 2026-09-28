@@ -1,0 +1,18 @@
+{
+  "screen.mobile_haptics.title": "Mobile Haptics",
+
+  "option.mobile_haptics.enabled": "Haptic feedback",
+  "option.mobile_haptics.break": "Block breaking",
+  "option.mobile_haptics.place": "Block placing",
+
+  "gui.mobile_haptics.enabled": "ON",
+  "gui.mobile_haptics.disabled": "OFF",
+
+  "label.mobile_haptics.break_duration": "Break duration (ms)",
+  "label.mobile_haptics.place_duration": "Place duration (ms)",
+  "label.mobile_haptics.break_strength": "Break strength (%)",
+  "label.mobile_haptics.place_strength": "Place strength (%)",
+
+  "button.mobile_haptics.test": "Test vibration",
+  "button.mobile_haptics.save": "Save"
+}
