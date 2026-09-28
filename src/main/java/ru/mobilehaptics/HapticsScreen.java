@@ -1,179 +1,328 @@
 package ru.mobilehaptics;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.CycleButton;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 
 public final class HapticsScreen extends Screen {
+
     private final Screen parent;
 
-    private ButtonWidget enabledButton;
-    private ButtonWidget breakButton;
-    private ButtonWidget placeButton;
+    private CycleButton<Boolean> enabledButton;
+    private CycleButton<Boolean> breakButton;
+    private CycleButton<Boolean> placeButton;
+
+    private EditBox breakDurationBox;
+    private EditBox placeDurationBox;
+    private EditBox breakStrengthBox;
+    private EditBox placeStrengthBox;
 
     public HapticsScreen(Screen parent) {
-        super(Text.translatable("screen.mobile-haptics.title"));
+        super(Component.translatable("screen.mobile_haptics.title"));
         this.parent = parent;
     }
 
     @Override
     protected void init() {
-        MobileHapticsConfig config = HapticManager.getConfig();
-
         int centerX = this.width / 2;
-        int y = this.height / 2 - 80;
 
-        enabledButton = this.addDrawableChild(
-                ButtonWidget.builder(enabledText(config), button -> {
-                    config.enabled = !config.enabled;
-                    updateButtonTexts();
-                    HapticManager.save();
-                }).dimensions(centerX - 100, y, 200, 20).build()
-        );
+        MobileHapticsConfig config =
+                HapticManager.getConfig();
 
-        y += 25;
+        int y = 45;
 
-        breakButton = this.addDrawableChild(
-                ButtonWidget.builder(breakText(config), button -> {
-                    config.breakEnabled = !config.breakEnabled;
-                    updateButtonTexts();
-                    HapticManager.save();
-                }).dimensions(centerX - 100, y, 200, 20).build()
-        );
-
-        y += 25;
-
-        placeButton = this.addDrawableChild(
-                ButtonWidget.builder(placeText(config), button -> {
-                    config.placeEnabled = !config.placeEnabled;
-                    updateButtonTexts();
-                    HapticManager.save();
-                }).dimensions(centerX - 100, y, 200, 20).build()
-        );
-
-        y += 30;
-
-        this.addDrawableChild(
-                ButtonWidget.builder(
-                        Text.translatable("screen.mobile-haptics.test"),
-                        button -> HapticManager.test()
-                ).dimensions(centerX - 100, y, 200, 20).build()
-        );
-
-        y += 30;
-
-        this.addDrawableChild(
-                ButtonWidget.builder(
-                        Text.translatable("screen.mobile-haptics.break_strength",
-                                config.breakStrength),
-                        button -> {
-                            config.breakStrength += 10;
-
-                            if (config.breakStrength > 100) {
-                                config.breakStrength = 10;
-                            }
-
-                            HapticManager.save();
-                            clearAndInit();
+        enabledButton = CycleButton.onOffBuilder(
+                        Component.translatable("gui.mobile_haptics.enabled"),
+                        Component.translatable("gui.mobile_haptics.disabled")
+                )
+                .withInitialValue(config.enabled)
+                .create(
+                        centerX - 100,
+                        y,
+                        200,
+                        20,
+                        Component.translatable("option.mobile_haptics.enabled"),
+                        (button, value) -> {
+                            config.enabled = value;
                         }
-                ).dimensions(centerX - 100, y, 200, 20).build()
+                );
+
+        this.addRenderableWidget(enabledButton);
+
+        y += 27;
+
+        breakButton = CycleButton.onOffBuilder(
+                        Component.translatable("gui.mobile_haptics.enabled"),
+                        Component.translatable("gui.mobile_haptics.disabled")
+                )
+                .withInitialValue(config.breakEnabled)
+                .create(
+                        centerX - 100,
+                        y,
+                        200,
+                        20,
+                        Component.translatable("option.mobile_haptics.break"),
+                        (button, value) -> {
+                            config.breakEnabled = value;
+                        }
+                );
+
+        this.addRenderableWidget(breakButton);
+
+        y += 27;
+
+        placeButton = CycleButton.onOffBuilder(
+                        Component.translatable("gui.mobile_haptics.enabled"),
+                        Component.translatable("gui.mobile_haptics.disabled")
+                )
+                .withInitialValue(config.placeEnabled)
+                .create(
+                        centerX - 100,
+                        y,
+                        200,
+                        20,
+                        Component.translatable("option.mobile_haptics.place"),
+                        (button, value) -> {
+                            config.placeEnabled = value;
+                        }
+                );
+
+        this.addRenderableWidget(placeButton);
+
+        y += 30;
+
+        breakDurationBox = createNumberBox(
+                centerX - 100,
+                y,
+                Integer.toString(config.breakDuration)
+        );
+
+        y += 27;
+
+        placeDurationBox = createNumberBox(
+                centerX - 100,
+                y,
+                Integer.toString(config.placeDuration)
+        );
+
+        y += 27;
+
+        breakStrengthBox = createNumberBox(
+                centerX - 100,
+                y,
+                Integer.toString(config.breakStrength)
+        );
+
+        y += 27;
+
+        placeStrengthBox = createNumberBox(
+                centerX - 100,
+                y,
+                Integer.toString(config.placeStrength)
+        );
+
+        y += 32;
+
+        this.addRenderableWidget(
+                Button.builder(
+                                Component.translatable(
+                                        "button.mobile_haptics.test"
+                                ),
+                                button -> HapticManager.test()
+                        )
+                        .bounds(
+                                centerX - 100,
+                                y,
+                                200,
+                                20
+                        )
+                        .build()
         );
 
         y += 25;
 
-        this.addDrawableChild(
-                ButtonWidget.builder(
-                        Text.translatable("screen.mobile-haptics.place_strength",
-                                config.placeStrength),
-                        button -> {
-                            config.placeStrength += 10;
-
-                            if (config.placeStrength > 100) {
-                                config.placeStrength = 10;
-                            }
-
-                            HapticManager.save();
-                            clearAndInit();
-                        }
-                ).dimensions(centerX - 100, y, 200, 20).build()
-        );
-
-        y += 30;
-
-        this.addDrawableChild(
-                ButtonWidget.builder(
-                        Text.translatable("gui.done"),
-                        button -> close()
-                ).dimensions(centerX - 100, y, 200, 20).build()
+        this.addRenderableWidget(
+                Button.builder(
+                                Component.translatable(
+                                        "button.mobile_haptics.save"
+                                ),
+                                button -> saveAndClose()
+                        )
+                        .bounds(
+                                centerX - 100,
+                                y,
+                                200,
+                                20
+                        )
+                        .build()
         );
     }
 
-    private void clearAndInit() {
-        this.clearChildren();
-        this.init();
-    }
-
-    private void updateButtonTexts() {
-        MobileHapticsConfig config = HapticManager.getConfig();
-
-        enabledButton.setMessage(enabledText(config));
-        breakButton.setMessage(breakText(config));
-        placeButton.setMessage(placeText(config));
-    }
-
-    private Text enabledText(MobileHapticsConfig config) {
-        return Text.translatable(
-                "screen.mobile-haptics.enabled",
-                config.enabled
+    private EditBox createNumberBox(
+            int x,
+            int y,
+            String value
+    ) {
+        EditBox box = new EditBox(
+                this.font,
+                x,
+                y,
+                200,
+                20,
+                Component.empty()
         );
-    }
 
-    private Text breakText(MobileHapticsConfig config) {
-        return Text.translatable(
-                "screen.mobile-haptics.break",
-                config.breakEnabled
+        box.setValue(value);
+        box.setFilter(text ->
+                text.matches("\\d{0,3}")
         );
+
+        this.addRenderableWidget(box);
+
+        return box;
     }
 
-    private Text placeText(MobileHapticsConfig config) {
-        return Text.translatable(
-                "screen.mobile-haptics.place",
-                config.placeEnabled
-        );
-    }
+    private void saveAndClose() {
+        MobileHapticsConfig config =
+                HapticManager.getConfig();
 
-    @Override
-    public void close() {
+        config.breakDuration =
+                clamp(
+                        parseInt(
+                                breakDurationBox.getValue(),
+                                config.breakDuration
+                        ),
+                        5,
+                        200
+                );
+
+        config.placeDuration =
+                clamp(
+                        parseInt(
+                                placeDurationBox.getValue(),
+                                config.placeDuration
+                        ),
+                        5,
+                        200
+                );
+
+        config.breakStrength =
+                clamp(
+                        parseInt(
+                                breakStrengthBox.getValue(),
+                                config.breakStrength
+                        ),
+                        1,
+                        100
+                );
+
+        config.placeStrength =
+                clamp(
+                        parseInt(
+                                placeStrengthBox.getValue(),
+                                config.placeStrength
+                        ),
+                        1,
+                        100
+                );
+
         HapticManager.save();
 
-        if (this.client != null) {
-            this.client.setScreen(parent);
+        this.minecraft.setScreen(parent);
+    }
+
+    private static int parseInt(
+            String value,
+            int fallback
+    ) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException ignored) {
+            return fallback;
         }
+    }
+
+    private static int clamp(
+            int value,
+            int min,
+            int max
+    ) {
+        return Math.max(
+                min,
+                Math.min(max, value)
+        );
     }
 
     @Override
     public void render(
-            DrawContext context,
+            GuiGraphics graphics,
             int mouseX,
             int mouseY,
-            float delta
+            float partialTick
     ) {
-        this.renderBackground(context, mouseX, mouseY, delta);
+        this.renderBackground(graphics);
 
-        context.drawCenteredTextWithShadow(
-                this.textRenderer,
+        graphics.drawCenteredString(
+                this.font,
                 this.title,
                 this.width / 2,
-                25,
+                20,
                 0xFFFFFF
         );
 
-        super.render(context, mouseX, mouseY, delta);
+        graphics.drawString(
+                this.font,
+                Component.translatable(
+                        "label.mobile_haptics.break_duration"
+                ),
+                this.width / 2 - 100,
+                143,
+                0xFFFFFF
+        );
+
+        graphics.drawString(
+                this.font,
+                Component.translatable(
+                        "label.mobile_haptics.place_duration"
+                ),
+                this.width / 2 - 100,
+                170,
+                0xFFFFFF
+        );
+
+        graphics.drawString(
+                this.font,
+                Component.translatable(
+                        "label.mobile_haptics.break_strength"
+                ),
+                this.width / 2 - 100,
+                197,
+                0xFFFFFF
+        );
+
+        graphics.drawString(
+                this.font,
+                Component.translatable(
+                        "label.mobile_haptics.place_strength"
+                ),
+                this.width / 2 - 100,
+                224,
+                0xFFFFFF
+        );
+
+        super.render(
+                graphics,
+                mouseX,
+                mouseY,
+                partialTick
+        );
     }
 
     @Override
-    public boolean shouldPause() {
-        return false;
+    public void onClose() {
+        this.minecraft.setScreen(parent);
     }
 }
