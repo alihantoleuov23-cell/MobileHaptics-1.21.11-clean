@@ -36,13 +36,14 @@ public final class HapticsScreen extends Screen {
         MobileHapticsConfig config =
                 HapticManager.getConfig();
 
-        int y = 45;
-
-        enabledButton =
+        /*
+         * Global vibration
+         */
+        this.enabledButton =
                 CycleButton.onOffBuilder(config.enabled)
                         .create(
                                 centerX - 100,
-                                y,
+                                35,
                                 200,
                                 20,
                                 Component.translatable(
@@ -54,18 +55,19 @@ public final class HapticsScreen extends Screen {
                         );
 
         this.addRenderableWidget(
-                enabledButton
+                this.enabledButton
         );
 
-        y += 27;
-
-        breakButton =
+        /*
+         * Block breaking
+         */
+        this.breakButton =
                 CycleButton.onOffBuilder(
                                 config.breakEnabled
                         )
                         .create(
                                 centerX - 100,
-                                y,
+                                58,
                                 200,
                                 20,
                                 Component.translatable(
@@ -77,18 +79,19 @@ public final class HapticsScreen extends Screen {
                         );
 
         this.addRenderableWidget(
-                breakButton
+                this.breakButton
         );
 
-        y += 27;
-
-        placeButton =
+        /*
+         * Block placing
+         */
+        this.placeButton =
                 CycleButton.onOffBuilder(
                                 config.placeEnabled
                         )
                         .create(
                                 centerX - 100,
-                                y,
+                                81,
                                 200,
                                 20,
                                 Component.translatable(
@@ -100,55 +103,58 @@ public final class HapticsScreen extends Screen {
                         );
 
         this.addRenderableWidget(
-                placeButton
+                this.placeButton
         );
 
-        y += 30;
-
-        breakDurationBox =
+        /*
+         * Duration
+         */
+        this.breakDurationBox =
                 createNumberBox(
-                        centerX - 100,
-                        y,
+                        centerX - 180,
+                        123,
                         Integer.toString(
                                 config.breakDuration
-                        )
+                        ),
+                        150
                 );
 
-        y += 27;
-
-        placeDurationBox =
+        this.placeDurationBox =
                 createNumberBox(
-                        centerX - 100,
-                        y,
+                        centerX + 30,
+                        123,
                         Integer.toString(
                                 config.placeDuration
-                        )
+                        ),
+                        150
                 );
 
-        y += 27;
-
-        breakStrengthBox =
+        /*
+         * Strength
+         */
+        this.breakStrengthBox =
                 createNumberBox(
-                        centerX - 100,
-                        y,
+                        centerX - 180,
+                        161,
                         Integer.toString(
                                 config.breakStrength
-                        )
+                        ),
+                        150
                 );
 
-        y += 27;
-
-        placeStrengthBox =
+        this.placeStrengthBox =
                 createNumberBox(
-                        centerX - 100,
-                        y,
+                        centerX + 30,
+                        161,
                         Integer.toString(
                                 config.placeStrength
-                        )
+                        ),
+                        150
                 );
 
-        y += 32;
-
+        /*
+         * Test
+         */
         this.addRenderableWidget(
                 Button.builder(
                                 Component.translatable(
@@ -158,16 +164,17 @@ public final class HapticsScreen extends Screen {
                                         HapticManager.test()
                         )
                         .bounds(
-                                centerX - 100,
-                                y,
-                                200,
+                                centerX - 150,
+                                190,
+                                300,
                                 20
                         )
                         .build()
         );
 
-        y += 25;
-
+        /*
+         * Save
+         */
         this.addRenderableWidget(
                 Button.builder(
                                 Component.translatable(
@@ -177,9 +184,9 @@ public final class HapticsScreen extends Screen {
                                         saveAndClose()
                         )
                         .bounds(
-                                centerX - 100,
-                                y,
-                                200,
+                                centerX - 150,
+                                215,
+                                300,
                                 20
                         )
                         .build()
@@ -189,7 +196,8 @@ public final class HapticsScreen extends Screen {
     private EditBox createNumberBox(
             int x,
             int y,
-            String value
+            String value,
+            int width
     ) {
 
         EditBox box =
@@ -197,7 +205,7 @@ public final class HapticsScreen extends Screen {
                         this.font,
                         x,
                         y,
-                        200,
+                        width,
                         20,
                         Component.empty()
                 );
@@ -222,7 +230,7 @@ public final class HapticsScreen extends Screen {
         config.breakDuration =
                 clamp(
                         parseInt(
-                                breakDurationBox.getValue(),
+                                this.breakDurationBox.getValue(),
                                 config.breakDuration
                         ),
                         5,
@@ -232,7 +240,7 @@ public final class HapticsScreen extends Screen {
         config.placeDuration =
                 clamp(
                         parseInt(
-                                placeDurationBox.getValue(),
+                                this.placeDurationBox.getValue(),
                                 config.placeDuration
                         ),
                         5,
@@ -242,7 +250,7 @@ public final class HapticsScreen extends Screen {
         config.breakStrength =
                 clamp(
                         parseInt(
-                                breakStrengthBox.getValue(),
+                                this.breakStrengthBox.getValue(),
                                 config.breakStrength
                         ),
                         1,
@@ -252,7 +260,7 @@ public final class HapticsScreen extends Screen {
         config.placeStrength =
                 clamp(
                         parseInt(
-                                placeStrengthBox.getValue(),
+                                this.placeStrengthBox.getValue(),
                                 config.placeStrength
                         ),
                         1,
@@ -261,7 +269,9 @@ public final class HapticsScreen extends Screen {
 
         HapticManager.save();
 
-        this.minecraft.setScreen(parent);
+        this.minecraft.setScreen(
+                this.parent
+        );
     }
 
     private static int parseInt(
@@ -284,7 +294,10 @@ public final class HapticsScreen extends Screen {
 
         return Math.max(
                 min,
-                Math.min(value, max)
+                Math.min(
+                        value,
+                        max
+                )
         );
     }
 
@@ -296,18 +309,25 @@ public final class HapticsScreen extends Screen {
             float partialTick
     ) {
 
-        this.renderBackground(
-                graphics,
-                mouseX,
-                mouseY,
-                partialTick
+        /*
+         * Не используем renderBackground(),
+         * потому что в Minecraft 1.21.11 он
+         * вызывает blur и здесь возникает
+         * "Can only blur once per frame".
+         */
+        graphics.fill(
+                0,
+                0,
+                this.width,
+                this.height,
+                0xFF101010
         );
 
         graphics.drawCenteredString(
                 this.font,
                 this.title,
                 this.width / 2,
-                20,
+                15,
                 0xFFFFFF
         );
 
@@ -316,8 +336,8 @@ public final class HapticsScreen extends Screen {
                 Component.translatable(
                         "label.mobile_haptics.break_duration"
                 ),
-                this.width / 2 - 100,
-                143,
+                this.width / 2 - 180,
+                111,
                 0xFFFFFF
         );
 
@@ -326,8 +346,8 @@ public final class HapticsScreen extends Screen {
                 Component.translatable(
                         "label.mobile_haptics.place_duration"
                 ),
-                this.width / 2 - 100,
-                170,
+                this.width / 2 + 30,
+                111,
                 0xFFFFFF
         );
 
@@ -336,8 +356,8 @@ public final class HapticsScreen extends Screen {
                 Component.translatable(
                         "label.mobile_haptics.break_strength"
                 ),
-                this.width / 2 - 100,
-                197,
+                this.width / 2 - 180,
+                149,
                 0xFFFFFF
         );
 
@@ -346,8 +366,8 @@ public final class HapticsScreen extends Screen {
                 Component.translatable(
                         "label.mobile_haptics.place_strength"
                 ),
-                this.width / 2 - 100,
-                224,
+                this.width / 2 + 30,
+                149,
                 0xFFFFFF
         );
 
@@ -361,6 +381,8 @@ public final class HapticsScreen extends Screen {
 
     @Override
     public void onClose() {
-        this.minecraft.setScreen(parent);
+        this.minecraft.setScreen(
+                this.parent
+        );
     }
 }
