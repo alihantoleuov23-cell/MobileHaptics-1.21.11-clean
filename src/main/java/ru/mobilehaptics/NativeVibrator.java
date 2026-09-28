@@ -15,20 +15,16 @@ public final class NativeVibrator {
     }
 
     public static synchronized void init() {
+
         if (loaded) {
             return;
         }
 
-        String applicationPointer =
-                System.getenv("DALVIK_APPLICATION");
-
-        if (applicationPointer == null
-                || applicationPointer.isBlank()) {
-            return;
-        }
-
         String architecture =
-                System.getProperty("os.arch", "").toLowerCase();
+                System.getProperty(
+                        "os.arch",
+                        ""
+                ).toLowerCase();
 
         String resourcePath;
 
@@ -45,16 +41,22 @@ public final class NativeVibrator {
                     "/native/x86_64/libmobilehaptics.so";
 
         } else {
+
             return;
         }
 
         try {
+
             Path nativeDirectory =
                     FabricLoader.getInstance()
                             .getConfigDir()
-                            .resolve("mobile-haptics-native");
+                            .resolve(
+                                    "mobile-haptics-native"
+                            );
 
-            Files.createDirectories(nativeDirectory);
+            Files.createDirectories(
+                    nativeDirectory
+            );
 
             Path library =
                     nativeDirectory.resolve(
@@ -63,7 +65,9 @@ public final class NativeVibrator {
 
             try (InputStream input =
                          NativeVibrator.class
-                                 .getResourceAsStream(resourcePath)) {
+                                 .getResourceAsStream(
+                                         resourcePath
+                                 )) {
 
                 if (input == null) {
                     return;
@@ -77,12 +81,14 @@ public final class NativeVibrator {
             }
 
             System.load(
-                    library.toAbsolutePath().toString()
+                    library.toAbsolutePath()
+                            .toString()
             );
 
             loaded = nativeInit();
 
         } catch (Throwable ignored) {
+
             loaded = false;
         }
     }
@@ -91,6 +97,7 @@ public final class NativeVibrator {
             int durationMs,
             int strengthPercent
     ) {
+
         if (!loaded) {
             init();
         }
@@ -102,20 +109,28 @@ public final class NativeVibrator {
         int duration =
                 Math.max(
                         1,
-                        Math.min(durationMs, 5000)
+                        Math.min(
+                                durationMs,
+                                5000
+                        )
                 );
 
         int strength =
                 Math.max(
                         1,
-                        Math.min(strengthPercent, 100)
+                        Math.min(
+                                strengthPercent,
+                                100
+                        )
                 );
 
         try {
+
             nativeVibrate(
                     duration,
                     strength
             );
+
         } catch (Throwable ignored) {
         }
     }
