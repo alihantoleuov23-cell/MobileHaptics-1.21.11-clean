@@ -12,6 +12,9 @@
   "entrypoints": {
     "client": [
       "ru.mobilehaptics.MobileHapticsClient"
+    ],
+    "modmenu": [
+      "ru.mobilehaptics.ModMenuIntegration"
     ]
   },
 
