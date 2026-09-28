@@ -63,10 +63,7 @@ public final class HapticManager {
                     strength
             );
         } catch (Throwable ignored) {
-            /*
-             * Если Android-вибрация недоступна,
-             * Minecraft не должен вылететь.
-             */
+            // Не даём вибрации вызвать краш Minecraft.
         }
     }
 }
