@@ -109,10 +109,6 @@ Java_ru_mobilehaptics_NativeVibrator_nativeInit(
         return JNI_FALSE;
     }
 
-    /*
-     * Получаем Android Application,
-     * который предоставляет Zalith Launcher.
-     */
     jobject application =
             get_application_from_environment(env);
 
@@ -132,10 +128,6 @@ Java_ru_mobilehaptics_NativeVibrator_nativeInit(
         return JNI_FALSE;
     }
 
-    /*
-     * Android:
-     * Context.getSystemService(String)
-     */
     g_get_system_service =
             (*env)->GetMethodID(
                     env,
@@ -149,9 +141,6 @@ Java_ru_mobilehaptics_NativeVibrator_nativeInit(
         return JNI_FALSE;
     }
 
-    /*
-     * "vibrator"
-     */
     jstring vibrator_service =
             (*env)->NewStringUTF(
                     env,
@@ -209,9 +198,6 @@ Java_ru_mobilehaptics_NativeVibrator_nativeInit(
         return JNI_FALSE;
     }
 
-    /*
-     * Проверяем, есть ли вибромотор.
-     */
     g_has_vibrator =
             (*env)->GetMethodID(
                     env,
@@ -238,9 +224,6 @@ Java_ru_mobilehaptics_NativeVibrator_nativeInit(
         }
     }
 
-    /*
-     * Vibrator.vibrate(VibrationEffect)
-     */
     g_vibrate =
             (*env)->GetMethodID(
                     env,
@@ -249,11 +232,11 @@ Java_ru_mobilehaptics_NativeVibrator_nativeInit(
                     "(Landroid/os/VibrationEffect;)V"
             );
 
-    clear_exception(env);
+    if (g_vibrate == NULL) {
+        clear_exception(env);
+        return JNI_FALSE;
+    }
 
-    /*
-     * Android VibrationEffect.
-     */
     jclass local_effect_class =
             (*env)->FindClass(
                     env,
@@ -280,12 +263,6 @@ Java_ru_mobilehaptics_NativeVibrator_nativeInit(
         return JNI_FALSE;
     }
 
-    /*
-     * VibrationEffect.createOneShot(
-     *     long milliseconds,
-     *     int amplitude
-     * )
-     */
     g_create_one_shot =
             (*env)->GetStaticMethodID(
                     env,
@@ -348,9 +325,6 @@ Java_ru_mobilehaptics_NativeVibrator_nativeVibrate(
         strengthPercent = 100;
     }
 
-    /*
-     * Переводим 1..100% в Android amplitude 1..255.
-     */
     jint amplitude =
             (strengthPercent * 255) / 100;
 
