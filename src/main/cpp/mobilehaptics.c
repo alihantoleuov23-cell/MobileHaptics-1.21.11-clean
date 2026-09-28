@@ -1,23 +1,32 @@
 #include <jni.h>
-#include <stdint.h>
-#include <stdlib.h>
+#include <android/log.h>
+
+#define LOG_TAG "MobileHaptics"
+
+#define LOGE(...) \
+    __android_log_print(
+        ANDROID_LOG_ERROR,
+        LOG_TAG,
+        __VA_ARGS__
+    )
 
 static JavaVM *g_vm = NULL;
 
 static jobject g_application = NULL;
 static jobject g_vibrator = NULL;
 
-static jmethodID g_get_system_service = NULL;
-static jmethodID g_vibrate = NULL;
-static jmethodID g_has_vibrator = NULL;
-
 static jclass g_vibration_effect_class = NULL;
+
+static jmethodID g_get_system_service = NULL;
+static jmethodID g_has_vibrator = NULL;
+static jmethodID g_vibrate = NULL;
 static jmethodID g_create_one_shot = NULL;
 
 static int g_initialized = 0;
 
 static void clear_exception(JNIEnv *env) {
     if ((*env)->ExceptionCheck(env)) {
+        (*env)->ExceptionDescribe(env);
         (*env)->ExceptionClear(env);
     }
 }
@@ -29,69 +38,6 @@ JNI_OnLoad(JavaVM *vm, void *reserved) {
     g_vm = vm;
 
     return JNI_VERSION_1_6;
-}
-
-static JNIEnv *get_env(void) {
-    JNIEnv *env = NULL;
-
-    if (g_vm == NULL) {
-        return NULL;
-    }
-
-    jint result =
-            (*g_vm)->GetEnv(
-                    g_vm,
-                    (void **) &env,
-                    JNI_VERSION_1_6
-            );
-
-    if (result == JNI_OK) {
-        return env;
-    }
-
-    if (result == JNI_EDETACHED) {
-        if ((*g_vm)->AttachCurrentThread(
-                g_vm,
-                &env,
-                NULL
-        ) != JNI_OK) {
-            return NULL;
-        }
-
-        return env;
-    }
-
-    return NULL;
-}
-
-static jobject get_application_from_environment(
-        JNIEnv *env
-) {
-    const char *value =
-            getenv("DALVIK_APPLICATION");
-
-    if (value == NULL || value[0] == '\0') {
-        return NULL;
-    }
-
-    uintptr_t address =
-            (uintptr_t) strtoull(
-                    value,
-                    NULL,
-                    0
-            );
-
-    if (address == 0) {
-        return NULL;
-    }
-
-    jobject application =
-            (jobject) address;
-
-    return (*env)->NewGlobalRef(
-            env,
-            application
-    );
 }
 
 JNIEXPORT jboolean JNICALL
@@ -106,17 +52,88 @@ Java_ru_mobilehaptics_NativeVibrator_nativeInit(
     }
 
     if (env == NULL) {
+        LOGE("JNIEnv is NULL");
+        return JNI_FALSE;
+    }
+
+    /*
+     * Получаем Application напрямую из Android.
+     * Это не зависит от DALVIK_APPLICATION.
+     */
+    jclass activity_thread =
+            (*env)->FindClass(
+                    env,
+                    "android/app/ActivityThread"
+            );
+
+    if (activity_thread == NULL) {
+        LOGE("ActivityThread class not found");
+        clear_exception(env);
+        return JNI_FALSE;
+    }
+
+    jmethodID current_application =
+            (*env)->GetStaticMethodID(
+                    env,
+                    activity_thread,
+                    "currentApplication",
+                    "()Landroid/app/Application;"
+            );
+
+    if (current_application == NULL) {
+        LOGE("currentApplication method not found");
+        clear_exception(env);
+        (*env)->DeleteLocalRef(
+                env,
+                activity_thread
+        );
         return JNI_FALSE;
     }
 
     jobject application =
-            get_application_from_environment(env);
+            (*env)->CallStaticObjectMethod(
+                    env,
+                    activity_thread,
+                    current_application
+            );
 
-    if (application == NULL) {
+    if ((*env)->ExceptionCheck(env)) {
+        LOGE("currentApplication call failed");
+        clear_exception(env);
+
+        (*env)->DeleteLocalRef(
+                env,
+                activity_thread
+        );
+
         return JNI_FALSE;
     }
 
-    g_application = application;
+    (*env)->DeleteLocalRef(
+            env,
+            activity_thread
+    );
+
+    if (application == NULL) {
+        LOGE("Android Application is NULL");
+        return JNI_FALSE;
+    }
+
+    g_application =
+            (*env)->NewGlobalRef(
+                    env,
+                    application
+            );
+
+    (*env)->DeleteLocalRef(
+            env,
+            application
+    );
+
+    if (g_application == NULL) {
+        LOGE("Failed to create Application global reference");
+        return JNI_FALSE;
+    }
 
     jclass application_class =
             (*env)->GetObjectClass(
@@ -125,6 +142,7 @@ Java_ru_mobilehaptics_NativeVibrator_nativeInit(
             );
 
     if (application_class == NULL) {
+        LOGE("Application class not found");
         return JNI_FALSE;
     }
 
@@ -137,6 +155,7 @@ Java_ru_mobilehaptics_NativeVibrator_nativeInit(
             );
 
     if (g_get_system_service == NULL) {
+        LOGE("getSystemService not found");
         clear_exception(env);
         return JNI_FALSE;
     }
@@ -148,6 +167,7 @@ Java_ru_mobilehaptics_NativeVibrator_nativeInit(
             );
 
     if (vibrator_service == NULL) {
+        LOGE("Failed to create vibrator service string");
         return JNI_FALSE;
     }
 
@@ -165,11 +185,13 @@ Java_ru_mobilehaptics_NativeVibrator_nativeInit(
     );
 
     if ((*env)->ExceptionCheck(env)) {
+        LOGE("getSystemService(vibrator) failed");
         clear_exception(env);
         return JNI_FALSE;
     }
 
     if (vibrator == NULL) {
+        LOGE("Vibrator service is NULL");
         return JNI_FALSE;
     }
 
@@ -185,6 +207,7 @@ Java_ru_mobilehaptics_NativeVibrator_nativeInit(
     );
 
     if (g_vibrator == NULL) {
+        LOGE("Failed to create Vibrator global reference");
         return JNI_FALSE;
     }
 
@@ -195,9 +218,13 @@ Java_ru_mobilehaptics_NativeVibrator_nativeInit(
             );
 
     if (vibrator_class == NULL) {
+        LOGE("Vibrator class not found");
         return JNI_FALSE;
     }
 
+    /*
+     * Проверяем, есть ли вибромотор.
+     */
     g_has_vibrator =
             (*env)->GetMethodID(
                     env,
@@ -206,24 +233,33 @@ Java_ru_mobilehaptics_NativeVibrator_nativeInit(
                     "()Z"
             );
 
-    if (g_has_vibrator != NULL) {
-        jboolean has_vibrator =
-                (*env)->CallBooleanMethod(
-                        env,
-                        g_vibrator,
-                        g_has_vibrator
-                );
-
-        if ((*env)->ExceptionCheck(env)) {
-            clear_exception(env);
-            return JNI_FALSE;
-        }
-
-        if (!has_vibrator) {
-            return JNI_FALSE;
-        }
+    if (g_has_vibrator == NULL) {
+        LOGE("hasVibrator not found");
+        clear_exception(env);
+        return JNI_FALSE;
     }
 
+    jboolean has_vibrator =
+            (*env)->CallBooleanMethod(
+                    env,
+                    g_vibrator,
+                    g_has_vibrator
+            );
+
+    if ((*env)->ExceptionCheck(env)) {
+        LOGE("hasVibrator() failed");
+        clear_exception(env);
+        return JNI_FALSE;
+    }
+
+    if (!has_vibrator) {
+        LOGE("Device reports no vibrator");
+        return JNI_FALSE;
+    }
+
+    /*
+     * Android 8.0+ API.
+     */
     g_vibrate =
             (*env)->GetMethodID(
                     env,
@@ -233,17 +269,19 @@ Java_ru_mobilehaptics_NativeVibrator_nativeInit(
             );
 
     if (g_vibrate == NULL) {
+        LOGE("Vibrator.vibrate(VibrationEffect) not found");
         clear_exception(env);
         return JNI_FALSE;
     }
 
-    jclass local_effect_class =
+    jclass effect_class =
             (*env)->FindClass(
                     env,
                     "android/os/VibrationEffect"
             );
 
-    if (local_effect_class == NULL) {
+    if (effect_class == NULL) {
+        LOGE("VibrationEffect class not found");
         clear_exception(env);
         return JNI_FALSE;
     }
@@ -251,15 +289,16 @@ Java_ru_mobilehaptics_NativeVibrator_nativeInit(
     g_vibration_effect_class =
             (*env)->NewGlobalRef(
                     env,
-                    local_effect_class
+                    effect_class
             );
 
     (*env)->DeleteLocalRef(
             env,
-            local_effect_class
+            effect_class
     );
 
     if (g_vibration_effect_class == NULL) {
+        LOGE("Failed to create VibrationEffect global reference");
         return JNI_FALSE;
     }
 
@@ -272,11 +311,14 @@ Java_ru_mobilehaptics_NativeVibrator_nativeInit(
             );
 
     if (g_create_one_shot == NULL) {
+        LOGE("VibrationEffect.createOneShot not found");
         clear_exception(env);
         return JNI_FALSE;
     }
 
     g_initialized = 1;
+
+    LOGE("Mobile Haptics native vibration initialized");
 
     return JNI_TRUE;
 }
@@ -292,10 +334,6 @@ Java_ru_mobilehaptics_NativeVibrator_nativeVibrate(
 
     if (!g_initialized) {
         return;
-    }
-
-    if (env == NULL) {
-        env = get_env();
     }
 
     if (env == NULL) {
@@ -346,11 +384,13 @@ Java_ru_mobilehaptics_NativeVibrator_nativeVibrate(
             );
 
     if ((*env)->ExceptionCheck(env)) {
+        LOGE("createOneShot failed");
         clear_exception(env);
         return;
     }
 
     if (effect == NULL) {
+        LOGE("VibrationEffect is NULL");
         return;
     }
 
@@ -362,6 +402,7 @@ Java_ru_mobilehaptics_NativeVibrator_nativeVibrate(
     );
 
     if ((*env)->ExceptionCheck(env)) {
+        LOGE("Vibrator.vibrate() failed");
         clear_exception(env);
     }
 
